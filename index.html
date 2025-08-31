@@ -5,29 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>BOBOY — ресторанная сеть</title>
   <meta name="description" content="BOBOY — национальная кухня Узбекистана. Меню, блюдо дня, адреса." />
+  <meta name="theme-color" content="#0b0d10">
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     html, body { background:#0b0d10; color:#fff; }
+    html { scroll-behavior: smooth; }
     .glass { background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.12); }
     .grad1 { background: radial-gradient(1000px 500px at -10% -10%, rgba(251,191,36,.18), transparent), radial-gradient(1000px 600px at 120% 120%, rgba(192,132,252,.12), transparent); }
     .plate-bg { background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.12), transparent 40%), radial-gradient(circle at 70% 70%, rgba(255,255,255,.08), transparent 45%), linear-gradient(135deg, #111827, #1f2937); }
     .fade-in { animation: fade .6s ease both; }
     @keyframes fade { from {opacity:0; transform: translateY(8px)} to {opacity:1; transform: none} }
-    .modal-enter { animation: modal .2s ease both; }
+    .modal-enter { animation: modal .22s ease both; }
     @keyframes modal { from {opacity:0; transform: translateY(12px)} to {opacity:1; transform: none} }
     .card-border { background:linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.08), rgba(255,255,255,0)); }
+    .chip-active { background: rgba(251,191,36,.16) !important; border-color: rgba(251,191,36,.45) !important; }
+    .chip { transition: background-color .25s ease, border-color .25s ease, color .25s ease; }
+    .section-focus { animation: sectionFocus .65s ease-out; }
+    @keyframes sectionFocus { 0% { outline: 0 solid rgba(251,191,36,0); background-color: transparent; transform: scale(.995); } 40% { outline: 10px solid rgba(251,191,36,.08); background-color: rgba(251,191,36,.04); } 100% { outline: 0 solid rgba(251,191,36,0); background-color: transparent; transform: none; } }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
+  <!--
+    CHANGELOG:
+    • Исправил обрыв скрипта → файл полностью рабочий.
+    • «Блюдо дня»: всегда Острый плов + фото + бейдж «Острое».
+    • Плавные переходы к секциям и мягкая подсветка целевой секции.
+    • Локализация ингредиентов/меток (ru/en/uz) без «протечки» русского.
+    • Встроил иллюстрации как водяные знаки (герой + футер), не мешают контенту.
+    • Сохраняются язык, поиск, фильтр «vegetarian only».
+  -->
 </head>
 <body class="min-h-screen">
   <!-- Language Gate -->
-  <div id="lang-gate" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70">
+  <div id="lang-gate" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70" aria-hidden="true">
     <div class="glass rounded-3xl p-[1px]">
-      <div class="rounded-3xl bg-neutral-900/90 border border-white/10 p-6 w-[92vw] max-w-lg">
+      <div class="rounded-3xl bg-neutral-900/90 border border-white/10 p-6 w-[92vw] max-w-lg" role="dialog" aria-modal="true" aria-labelledby="langGateTitle">
         <div class="flex items-center gap-2 text-white/70 text-sm">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-80"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
           BOBOY
         </div>
-        <h3 class="mt-1 text-2xl font-semibold">Choose language / Tilni tanlang / Выберите язык</h3>
+        <h3 id="langGateTitle" class="mt-1 text-2xl font-semibold">Choose language / Tilni tanlang / Выберите язык</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
           <button data-lang="uz" class="glass rounded-2xl px-4 py-3 text-left hover:bg-white/10"><div class="font-medium">O‘zbek</div><div class="text-xs text-white/60 mt-0.5 uppercase tracking-widest">uz</div></button>
           <button data-lang="ru" class="glass rounded-2xl px-4 py-3 text-left hover:bg-white/10"><div class="font-medium">Русский</div><div class="text-xs text-white/60 mt-0.5 uppercase tracking-widest">ru</div></button>
@@ -50,7 +68,7 @@
       </div>
       <div class="flex items-center gap-2">
         <button id="change-language" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/10">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
           <span id="change-language-label" class="text-sm">Язык</span>
         </button>
         <button id="reset-lang" class="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/10" title="Сбросить выбор языка">
@@ -63,6 +81,11 @@
 
   <!-- Hero: Dish of the Day -->
   <section class="relative overflow-hidden grad1">
+    <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0">
+      <img src="/mnt/data/6a8bcbc0-9af5-4708-8c97-5782e522cbf2.jpg" alt="" class="absolute -left-8 bottom-0 w-[40vw] max-w-[460px] opacity-[0.14] md:opacity-[0.10] mix-blend-screen">
+      <img src="/mnt/data/3c8ea5b4-573e-421b-ae72-6c8bc4ecdffb.jpg" alt="" class="absolute -right-8 bottom-0 w-[36vw] max-w-[430px] opacity-[0.12] md:opacity-[0.08] mix-blend-screen">
+    </div>
+
     <div class="max-w-6xl mx-auto px-4 py-10 md:py-16">
       <div class="grid md:grid-cols-2 gap-10 items-center">
         <div class="fade-in">
@@ -72,19 +95,15 @@
           </div>
           <h1 id="dishOfDayName" class="mt-4 text-4xl md:text-5xl font-semibold leading-tight">—</h1>
           <p id="dishOfDayDesc" class="mt-3 text-white/70 max-w-prose">—</p>
-          <div class="mt-5 flex items-center gap-4" id="dishOfDayBadges"></div>
+          <div class="mt-5 flex items-center gap-2 flex-wrap" id="dishOfDayBadges"></div>
         </div>
         <div class="[perspective:1200px] fade-in" style="animation-delay:.06s">
           <div class="relative mx-auto w-full max-w-md">
             <div class="relative rounded-3xl p-1 card-border">
               <div class="rounded-3xl p-6 glass shadow-2xl">
                 <div class="relative aspect-[4/3] rounded-2xl plate-bg overflow-hidden">
-                  <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="h-56 w-56 rounded-full" style="background:linear-gradient(45deg, rgba(251,191,36,.35), rgba(244,114,182,.3), rgba(110,231,183,.22)); filter: blur(24px);"></div>
-                  </div>
-                  <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="h-44 w-44 rounded-full" style="background:linear-gradient(to bottom, rgba(251,191,36,.9), rgba(245,158,11,.6)); box-shadow: 0 10px 30px rgba(0,0,0,.35);"></div>
-                  </div>
+                  <img id="dishOfDayImg" alt="" class="absolute inset-0 w-full h-full object-cover opacity-90 hidden" loading="lazy">
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                   <div class="absolute bottom-4 right-4 text-right">
                     <div id="chefRecommends" class="text-sm text-white/70">Рекомендует шеф</div>
                     <div id="dishOfDayName2" class="text-lg font-medium">—</div>
@@ -102,21 +121,35 @@
   <section class="sticky top-[57px] z-30 border-b border-white/10 bg-black/40 backdrop-blur">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center gap-3">
       <div class="relative flex-1">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input id="search" placeholder="Поиск по меню…" class="w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-amber-400/40">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input id="search" placeholder="Поиск по меню…" class="w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-amber-400/40" aria-label="Поиск по меню">
       </div>
-      <button id="vegOnlyBtn" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border transition bg-white/5 border-white/10 hover:bg-white/10">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C12 2 7 8 7 12a5 5 0 0010 0c0-4-5-10-5-10z"></path></svg>
+      <button id="vegOnlyBtn" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border transition bg-white/5 border-white/10 hover:bg-white/10" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2C12 2 7 8 7 12a5 5 0 0010 0c0-4-5-10-5-10z"></path></svg>
         <span id="vegOnlyLabel">Только вегетарианское</span>
       </button>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 pb-3">
+      <div id="cat-nav" class="flex gap-2 overflow-x-auto no-scrollbar py-1" aria-label="Навигация по категориям"></div>
     </div>
   </section>
 
   <!-- MENU -->
-  <main class="max-w-6xl mx-auto px-4 py-10 space-y-14" id="menu-root"></main>
+  <main class="max-w-6xl mx-auto px-4 py-10 space-y-14" id="menu-root" tabindex="-1"></main>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="hidden max-w-6xl mx-auto px-4 py-20 text-center text-white/70">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs uppercase tracking-widest">No results</div>
+    <h3 class="mt-4 text-2xl font-semibold" id="emptyTitle">Ничего не найдено</h3>
+    <p class="mt-2" id="emptyBody">Попробуйте изменить поиск или сбросить фильтры.</p>
+    <button id="resetFilters" class="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10">Сбросить</button>
+  </div>
 
   <!-- FOOTER -->
-  <footer class="border-t border-white/10 bg-black/50">
+  <footer class="relative border-t border-white/10 bg-black/50">
+    <div aria-hidden="true" class="pointer-events-none select-none absolute inset-0">
+      <img src="/mnt/data/3c8ea5b4-573e-421b-ae72-6c8bc4ecdffb.jpg" alt="" class="absolute right-2 bottom-0 h-52 md:h-64 opacity-[0.10] mix-blend-screen">
+    </div>
     <div class="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-8">
       <div>
         <div class="font-semibold text-lg">BOBOY</div>
@@ -126,9 +159,9 @@
         <div id="locationsLabel" class="font-medium mb-3">Адреса</div>
         <ul class="space-y-3 text-sm text-white/80">
           <li class="flex items-start gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5"><path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 1118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Tashkent City Mall, 3rd Floor</li>
-          <li class="flex items-start gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5"><path d="M22 16.92V21a2 2 0 01-2.18 2A19.79 19.79 0 013 5.18 2 2 0 015 3h4.09a2 2 0 012 1.72c.12.81.3 1.6.57 2.34a2 2 0 01-.45 2.11L9.91 10.09a16 16 0 006.99 6.99l.92-1.3a2 2 0 012.11-.45c.74.27 1.53.45 2.34.57A2 2 0 0122 16.92z"></path></svg> +998 77 109 88 77</li>
+          <li class="flex items-start gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5"><path d="M22 16.92V21a2 2 0 01-2.18 2A19.79 19.79 0 013 5.18 2 2 0 015 3h4.09a2 2 0 012 1.72c.12.81.3 1.6.57 2.34a2 2 0 01-.45 2.11L9.91 10.09a16 16 0 006.99 6.99l.92-1.3a2 2 0 012.11-.45c.74.27 1.53.45 2.34.57A2 2 0 0122 16.92z"></path></svg> <a href="tel:+998771098877" class="hover:underline">+998 77 109 88 77</a></li>
           <li class="flex items-start gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5"><path d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 1118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Taras Shevchenko Street, 38A</li>
-          <li class="flex items-start gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5"><path d="M22 16.92V21a2 2 0 01-2.18 2A19.79 19.79 0 013 5.18 2 2 0 015 3h4.09a2 2 0 012 1.72c.12.81.3 1.6.57 2.34a2 2 0 01-.45 2.11L9.91 10.09a16 16 0 006.99 6.99l.92-1.3a2 2 0 012.11-.45c.74.27 1.53.45 2.34.57A2 2 0 0122 16.92z"></path></svg> +998 77 235 88 77</li>
+          <li class="flex items-start gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5"><path d="M22 16.92V21a2 2 0 01-2.18 2A19.79 19.79 0 013 5.18 2 2 0 015 3h4.09a2 2 0 012 1.72c.12.81.3 1.6.57 2.34a2 2 0 01-.45 2.11L9.91 10.09a16 16 0 006.99 6.99l.92-1.3a2 2 0 012.11-.45c.74.27 1.53.45 2.34.57A2 2 0 0122 16.92z"></path></svg> <a href="tel:+998772358877" class="hover:underline">+998 77 235 88 77</a></li>
         </ul>
       </div>
       <div>
@@ -140,21 +173,21 @@
   </footer>
 
   <!-- ITEM MODAL -->
-  <div id="item-modal" class="fixed inset-0 z-50 hidden items-end md:items-center justify-center">
-    <div class="absolute inset-0 bg-black/70" onclick="hideModal()"></div>
-    <div class="relative w-full max-w-lg mx-auto rounded-3xl p-[1px] glass modal-enter">
+  <div id="item-modal" class="fixed inset-0 z-50 hidden items-end md:items-center justify-center" aria-hidden="true">
+    <div class="absolute inset-0 bg-black/70" data-backdrop></div>
+    <div class="relative w-full max-w-lg mx-auto rounded-3xl p-[1px] glass modal-enter" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="rounded-3xl bg-neutral-900/95 border border-white/10">
         <div class="flex items-start justify-between gap-3 p-5">
           <div>
             <div id="modalTitle" class="text-lg font-semibold leading-tight">—</div>
             <div id="modalPrice" class="text-sm text-white/60 mt-1">—</div>
           </div>
-          <button class="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10" onclick="hideModal()">
+          <button id="modalClose" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10" aria-label="Закрыть">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
         <div class="px-5 pb-5">
-          <div class="flex items-center gap-2 text-sm" id="modalBadges"></div>
+          <div class="flex items-center gap-2 text-sm" id="modalBadges" aria-live="polite"></div>
           <div class="mt-5">
             <div id="ingredientsLabel" class="font-medium mb-2">Ингредиенты</div>
             <ul id="ingredientsList" class="list-disc list-inside text-white/80 space-y-1"></ul>
@@ -167,260 +200,204 @@
   </div>
 
   <script>
-  // ————— Data/Strings —————
   const STR = {
-    ru: {
-      topbarSubtitle: "Национальная кухня Узбекистана",
-      changeLanguage: "Язык",
-      dishOfDay: "Блюдо дня",
-      dishOfDayDesc: "Сегодня шеф рекомендует фирменное блюдо с домашними специями и сезонными продуктами.",
-      chefRecommends: "Рекомендует шеф",
-      vegetarian: "Вегетарианское",
-      notVegetarian: "Содержит мясо/птицу/рыбу",
-      searchPlaceholder: "Поиск по меню…",
-      vegOnly: "Только вегетарианское",
-      results: "Результаты",
-      ingredients: "Ингредиенты",
-      ingredientsSoon: "Состав скоро будет указан. Уточните у официанта.",
-      locations: "Адреса",
-      footerCopy: "Атмосфера Узбекистана: уникальные ароматы и вкусы.",
-      allergyNote: "Пожалуйста, предупредите нас о любых аллергиях. Состав блюд может незначительно отличаться.",
-    },
-    en: {
-      topbarSubtitle: "Uzbek national cuisine",
-      changeLanguage: "Language",
-      dishOfDay: "Dish of the Day",
-      dishOfDayDesc: "Chef’s special prepared with house spices and seasonal produce.",
-      chefRecommends: "Chef recommends",
-      vegetarian: "Vegetarian",
-      notVegetarian: "Contains meat/poultry/fish",
-      searchPlaceholder: "Search the menu…",
-      vegOnly: "Vegetarian only",
-      results: "Results",
-      ingredients: "Ingredients",
-      ingredientsSoon: "Ingredients coming soon. Please ask your server.",
-      locations: "Locations",
-      footerCopy: "Immerse yourself in Uzbekistan’s unique tastes and aromas.",
-      allergyNote: "Please let us know about any allergies. Ingredients may vary slightly.",
-    },
-    uz: {
-      topbarSubtitle: "Oʻzbek milliy taomlari",
-      changeLanguage: "Til",
-      dishOfDay: "Kun taomi",
-      dishOfDayDesc: "Shefning uy ziravorlari va mavsumiy mahsulotlardan tayyorlangan maxsus taomi.",
-      chefRecommends: "Shef tavsiya qiladi",
-      vegetarian: "Vegetarian",
-      notVegetarian: "Goʻsht/tovuq/baliq bor",
-      searchPlaceholder: "Menyu bo‘yicha qidirish…",
-      vegOnly: "Faqat vegetarian",
-      results: "Natijalar",
-      ingredients: "Tarkibi",
-      ingredientsSoon: "Tarkib tez orada qoʻshiladi. Ofitsiantdan soʻrang.",
-      locations: "Manzillar",
-      footerCopy: "Oʻzbekistonning oʻziga xos tamlari va hidlari.",
-      allergyNote: "Allergiyangiz bo‘lsa, oldindan ayting. Tarkib biroz farq qilishi mumkin.",
-    },
+    ru: { topbarSubtitle:"Национальная кухня Узбекистана", changeLanguage:"Язык", dishOfDay:"Блюдо дня", dishOfDayDesc:"Сегодня шеф рекомендует фирменное блюдо с домашними специями и сезонными продуктами.", chefRecommends:"Рекомендует шеф", vegetarian:"Вегетарианское", notVegetarian:"Содержит мясо/птицу/рыбу", spicy:"Острое", searchPlaceholder:"Поиск по меню…", vegOnly:"Только вегетарианское", results:"Результаты", ingredients:"Ингредиенты", ingredientsSoon:"Состав скоро будет указан. Уточните у официанта.", locations:"Адреса", footerCopy:"Атмосфера Узбекистана: уникальные ароматы и вкусы.", allergyNote:"Пожалуйста, предупредите нас о любых аллергиях. Состав блюд может незначительно отличаться.", chips:{ starters:"Закуски", salads:"Салаты", soups:"Супы", mains:"Горячие блюда", kebabs:"Шашлыки и гарниры", desserts:"Десерты", drinks:"Напитки (выбор)" }, emptyTitle:"Ничего не найдено", emptyBody:"Попробуйте изменить поиск или сбросить фильтры.", reset:"Сбросить" },
+    en: { topbarSubtitle:"Uzbek national cuisine", changeLanguage:"Language", dishOfDay:"Dish of the Day", dishOfDayDesc:"Chef’s special prepared with house spices and seasonal produce.", chefRecommends:"Chef recommends", vegetarian:"Vegetarian", notVegetarian:"Contains meat/poultry/fish", spicy:"Spicy", searchPlaceholder:"Search the menu…", vegOnly:"Vegetarian only", results:"Results", ingredients:"Ingredients", ingredientsSoon:"Ingredients coming soon. Please ask your server.", locations:"Locations", footerCopy:"Immerse yourself in Uzbekistan’s unique tastes and aromas.", allergyNote:"Please let us know about any allergies. Ingredients may vary slightly.", chips:{ starters:"Starters", salads:"Salads", soups:"Soups", mains:"Main Courses", kebabs:"Kebabs & Sides", desserts:"Desserts", drinks:"Drinks (selection)" }, emptyTitle:"No matches", emptyBody:"Try adjusting your search or clearing filters.", reset:"Reset" },
+    uz: { topbarSubtitle:"Oʻzbek milliy taomlari", changeLanguage:"Til", dishOfDay:"Kun taomi", dishOfDayDesc:"Shefning uy ziravorlari va mavsumiy mahsulotlardan tayyorlangan maxsus taomi.", chefRecommends:"Shef tavsiya qiladi", vegetarian:"Vegetarian", notVegetarian:"Goʻsht/tovuq/baliq bor", spicy:"Achchiq", searchPlaceholder:"Menyu bo‘yicha qidirish…", vegOnly:"Faqat vegetarian", results:"Natijalar", ingredients:"Tarkibi", ingredientsSoon:"Tarkib tez orada qoʻshiladi. Ofitsiantdan soʻrang.", locations:"Manzillar", footerCopy:"Oʻzbekistonning oʻziga xos tamlari va hidlari.", allergyNote:"Allergiyangiz bo‘lsa, oldindan ayting. Tarkib biroz farq qilishi mumkin.", chips:{ starters:"Yaxna taomlar", salads:"Salatlar", soups:"Sho‘rvalar", mains:"Asosiy taomlar", kebabs:"Kaboblar va qo‘shimchalar", desserts:"Shirinliklar", drinks:"Ichimliklar (tanlov)" }, emptyTitle:"Hech narsa topilmadi", emptyBody:"Qidiruvni o‘zgartiring yoki filtrlarni tozalang.", reset:"Tozalash" }
   };
 
   const ING = {
-    pilaf:["рис","морковь","лук","зира","барбарис","говядина/баранина"],
-    lagman:["ручная лапша","говядина","овощи","перец","лук","помидор"],
-    kazanKebab:["баранина","картофель","лук","зира","масло"],
-    norin:["лапша","конина/говядина","лук","перец"],
-    somsaMeat:["тесто","говядина","лук","зира"],
-    somsaCheese:["тесто","сыр","зелень","кунжут"],
-    khachapuri:["тесто","сыр сулугуни","яйцо (аджар)","масло"],
-    cheburekBeef:["тесто","говядина","лук","специи"],
-    cheburekCheese:["тесто","сыр","зелень"],
-    greek:["огурец","помидор","оливки","сыр фета","лук","оливковое масло"],
-    caesar:["курица","салат ромен","пармезан","крутоны","соус цезарь"],
-    eggplantTempura:["бакинский баклажан","тесто темпура","соус","зелень"],
-    assortedVeg:["сезонные овощи"],
-    lentilSoup:["чечевица","овощи","специи"],
-    manpar:["домашняя лапша","бульон","говядина","овощи"],
-    chuchvara:["пельмени","говядина","лук","бульон"],
-    sayBeef:["говядина","болгарский перец","лук","специи"],
-    sayChicken:["курица","перец","лук","специи"],
-    dolma:["виноградные листья","фарш","рис","соус"],
-    beshbarmak:["тесто","мясо","лук"],
-    manti:["тесто","фарш","лук","специи"],
-    sokoro:["тушёное мясо","овощи","специи"],
-    somboro:["овощи","яйцо","специи"],
-    fries:["картофель","масло","соль"],
-    rice:["рис","масло","соль"],
-    vegKebab:["овощи гриль","перец","кабачок","баклажан","лук"],
-    liver:["печень","лук","специи"],
-    waguri:["мраморная говядина","специи"],
-    khalim:["пшеница","мясо","лук","масло"],
-    tushenka:["говядина","специи"],
-    nohot:["нут","мясо","лук","специи"],
-    bakhlava:["слоёное тесто","орехи","мёд"],
-    tiramisu:["маскарпоне","савоярди","эспрессо"],
-    napoleon:["слоёное тесто","крем"],
-    sanseb:["сырный крем","печёная корочка"],
+    pilaf:{ ru:["рис","морковь","лук","зира","барбарис","говядина/баранина"], en:["rice","carrot","onion","cumin","barberry","beef/lamb"], uz:["guruch","sabzi","piyoz","zira","barbaris","mol/goʻsht qoʻy"] },
+    lagman:{ ru:["ручная лапша","говядина","овощи","перец","лук","помидор"], en:["handmade noodles","beef","vegetables","pepper","onion","tomato"], uz:["qoʻlda tayyorlangan lagʻmon","mol goʻshti","sabzavotlar","qalampir","piyoz","pomidor"] },
+    kazanKebab:{ ru:["баранина","картофель","лук","зира","масло"], en:["lamb","potato","onion","cumin","oil"], uz:["qoʻzichoq goʻshti","kartoshka","piyoz","zira","yogʻ"] },
+    norin:{ ru:["лапша","конина/говядина","лук","перец"], en:["noodles","horse meat/beef","onion","pepper"], uz:["lagʻmon xamiri","ot goʻshti/mol goʻshti","piyoz","qalampir"] },
+    somsaMeat:{ ru:["тесто","говядина","лук","зира"], en:["dough","beef","onion","cumin"], uz:["xamir","mol goʻshti","piyoz","zira"] },
+    somsaCheese:{ ru:["тесто","сыр","зелень","кунжут"], en:["dough","cheese","herbs","sesame"], uz:["xamir","pishloq","koʻkatlar","kunjut"] },
+    khachapuri:{ ru:["тесто","сыр сулугуни","яйцо (аджар)","масло"], en:["dough","sulguni cheese","egg (Adjarian)","butter"], uz:["xamir","suluguni pishlogʻi","tuxum (Ajar)","sariyogʻ"] },
+    cheburekBeef:{ ru:["тесто","говядина","лук","специи"], en:["dough","beef","onion","spices"], uz:["xamir","mol goʻshti","piyoz","ziravorlar"] },
+    cheburekCheese:{ ru:["тесто","сыр","зелень"], en:["dough","cheese","herbs"], uz:["xamir","pishloq","koʻkatlar"] },
+    greek:{ ru:["огурец","помидор","оливки","сыр фета","лук","оливковое масло"], en:["cucumber","tomato","olives","feta cheese","onion","olive oil"], uz:["bodring","pomidor","zaytun","feta pishlogʻi","piyoz","zaytun moyi"] },
+    caesar:{ ru:["курица","салат ромен","пармезан","крутоны","соус цезарь"], en:["chicken","romaine lettuce","parmesan","croutons","caesar dressing"], uz:["tovuq goʻshti","roma salati bargi","parmezan","krutondar","Sezar sousi"] },
+    eggplantTempura:{ ru:["бакинский баклажан","тесто темпура","соус","зелень"], en:["baku eggplant","tempura batter","sauce","herbs"], uz:["Boku baqlajoni","tempura xamiri","sous","koʻkatlar"] },
+    assortedVeg:{ ru:["сезонные овощи"], en:["seasonal vegetables"], uz:["mavsumiy sabzavotlar"] },
+    lentilSoup:{ ru:["чечевица","овощи","специи"], en:["lentils","vegetables","spices"], uz:["masur","sabzavotlar","ziravorlar"] },
+    manpar:{ ru:["домашняя лапша","бульон","говядина","овощи"], en:["homemade noodles","broth","beef","vegetables"], uz:["uy lagʻmoni","bulʼon","mol goʻshti","sabzavotlar"] },
+    chuchvara:{ ru:["пельмени","говядина","лук","бульон"], en:["dumplings","beef","onion","broth"], uz:["chuchvara","mol goʻshti","piyoz","shoʻrva"] },
+    sayBeef:{ ru:["говядина","болгарский перец","лук","специи"], en:["beef","bell pepper","onion","spices"], uz:["mol goʻshti","bulgʻor qalampiri","piyoz","ziravorlar"] },
+    sayChicken:{ ru:["курица","перец","лук","специи"], en:["chicken","pepper","onion","spices"], uz:["tovuq goʻshti","qalampir","piyoz","ziravorlar"] },
+    dolma:{ ru:["виноградные листья","фарш","рис","соус"], en:["grape leaves","minced meat","rice","sauce"], uz:["uzum bargi","qiymalangan goʻsht","guruch","sous"] },
+    beshbarmak:{ ru:["тесто","мясо","лук"], en:["flat pasta","meat","onion"], uz:["xonim xamiri","goʻsht","piyoz"] },
+    manti:{ ru:["тесто","фарш","лук","специи"], en:["dough","minced meat","onion","spices"], uz:["xamir","qiyma","piyoz","ziravorlar"] },
+    sokoro:{ ru:["тушёное мясо","овощи","специи"], en:["braised meat","vegetables","spices"], uz:["dimlangan goʻsht","sabzavotlar","ziravorlar"] },
+    somboro:{ ru:["овощи","яйцо","специи"], en:["vegetables","egg","spices"], uz:["sabzavotlar","tuxum","ziravorlar"] },
+    fries:{ ru:["картофель","масло","соль"], en:["potato","oil","salt"], uz:["kartoshka","yogʻ","tuz"] },
+    rice:{ ru:["рис","масло","соль"], en:["rice","oil","salt"], uz:["guruch","yogʻ","tuz"] },
+    vegKebab:{ ru:["овощи гриль","перец","кабачок","баклажан","лук"], en:["grilled vegetables","pepper","zucchini","eggplant","onion"], uz:["grilda sabzavotlar","qalampir","kabachki","baqlajon","piyoz"] },
+    liver:{ ru:["печень","лук","специи"], en:["liver","onion","spices"], uz:["jigar","piyoz","ziravorlar"] },
+    waguri:{ ru:["мраморная говядина","специи"], en:["marbled beef","spices"], uz:["marmar mol goʻshti","ziravorlar"] },
+    khalim:{ ru:["пшеница","мясо","лук","масло"], en:["wheat","meat","onion","butter/oil"], uz:["bugʻdoy","goʻsht","piyoz","sariyogʻ/yogʻ"] },
+    tushenka:{ ru:["говядина","специи"], en:["beef","spices"], uz:["mol goʻshti","ziravorlar"] },
+    nohot:{ ru:["нут","мясо","лук","специи"], en:["chickpeas","meat","onion","spices"], uz:["noʻxat","goʻsht","piyoz","ziravorlar"] },
+    bakhlava:{ ru:["слоёное тесто","орехи","мёд"], en:["phyllo pastry","nuts","honey"], uz:["qatlamali xamir","yongʻoq","asal"] },
+    tiramisu:{ ru:["маскарпоне","савоярди","эспрессо"], en:["mascarpone","savoiardi","espresso"], uz:["maskarpone","savoyardi","espresso"] },
+    napoleon:{ ru:["слоёное тесто","крем"], en:["puff pastry","cream"], uz:["qatlama xamir","krem"] },
+    sanseb:{ ru:["сырный крем","печёная корочка"], en:["cheese cream","baked top"], uz:["pishloqli krem","pishgan qobiq"] },
+    turkishMeze:{ ru:["ачылы эзме","оливки","хумус","суджук","хайдари","нан"], en:["acili ezme","olives","hummus","sujuk","haydari","bread"], uz:["achchiq ezma","zaytun","xumus","sujuk kolbasasi","xaydari","non"] },
+    assortedSet:{ ru:["сеты горячих блюд"], en:["assortment of hot dishes"], uz:["issiq taomlar assortisi"] }
   };
 
-  const ITEMS = (()=>{
-    const I=(id,name,price,opts={})=>({id,name,price,...opts});
-    return {
-      // Starters
-      suzma: I("suzma", {ru:"Сузма",en:"Suzma",uz:"Suzma"}, 25000, {veg:true,ingredients:["кисломолочный соус","зелень"]}),
-      marinated_veg: I("marinated_veg", {ru:"Маринованные овощи",en:"Marinated Vegetables",uz:"Tuzlangan sabzavotlar"}, 38000, {veg:true,ingredients:ING.assortedVeg}),
-      kulcha: I("kulcha", {ru:"Домашний хлеб (кулча)",en:"House Bread (Kulcha)",uz:"Non (Kulcha)"}, 15000, {veg:true,ingredients:["пшеничная лепёшка","кунжут"]}),
-      garlic_nan: I("garlic_nan", {ru:"Чесночный нан",en:"Garlic Nan",uz:"Sarimsoqli non"}, 28000, {veg:true,ingredients:["лепёшка","чесночное масло","зелень"]}),
-      khach_ap: I("khach_ap", {ru:"Хачапури по-аджарски",en:"Khachapuri (Adjarian)",uz:"Xachapuri-Ajar"}, 73000, {veg:true,ingredients:ING.khachapuri}),
-      khach_meg: I("khach_meg", {ru:"Хачапури по-мегрельски",en:"Khachapuri (Megrelian)",uz:"Xachapuri-Megrel"}, 73000, {veg:true,ingredients:ING.khachapuri}),
-      cheb_beef: I("cheb_beef", {ru:"Мини-чебурек с говядиной (4 шт)",en:"Mini Cheburek with Beef (4 pcs)",uz:"Mini cheburek (go‘shtli) (4 dona)"}, 40000, {veg:false,ingredients:ING.cheburekBeef}),
-      cheb_cheese: I("cheb_cheese", {ru:"Мини-чебурек с сыром (4 шт)",en:"Mini Cheburek with Cheese (4 pcs)",uz:"Mini cheburek (pishloqli) (4 dona)"}, 35000, {veg:true,ingredients:ING.cheburekCheese}),
-      somsa_trad: I("somsa_trad", {ru:"Самса традиционная (1 шт)",en:"Somsa Traditional (1 pc)",uz:"Tandir somsa (1 dona)"}, 20000, {veg:false,ingredients:ING.somsaMeat}),
-      somsa_olot: I("somsa_olot", {ru:"Самса Олот (1 шт)",en:"Somsa Olot (1 pc)",uz:"Olot somsa (1 dona)"}, 15000, {veg:false,ingredients:ING.somsaMeat}),
-      turkish_meze: I("turkish_meze", {ru:"Турецкий мезе сет",en:"Turkish Meze Set",uz:"Turkcha mezze seti"}, 95000, {veg:false,ingredients:["ачылы эзме","оливки","хумус","суджук","хайдари","нан"]}),
+  const ITEMS = (()=>{ const I=(id,name,price,opts={})=>({id,name,price,...opts}); return {
+    suzma:I("suzma",{ru:"Сузма",en:"Suzma",uz:"Suzma"},25000,{veg:true,ingredients:{ru:["кисломолочный соус","зелень"],en:["fermented dairy dip","herbs"],uz:["qatiqli sous","koʻkatlar"]}}),
+    marinated_veg:I("marinated_veg",{ru:"Маринованные овощи",en:"Marinated Vegetables",uz:"Tuzlangan sabzavotlar"},38000,{veg:true,ingredients:ING.assortedVeg}),
+    kulcha:I("kulcha",{ru:"Домашний хлеб (кулча)",en:"House Bread (Kulcha)",uz:"Non (Kulcha)"},15000,{veg:true,ingredients:{ru:["пшеничная лепёшка","кунжут"],en:["wheat flatbread","sesame"],uz:["bugʻdoy lepeshka","kunjut"]}}),
+    garlic_nan:I("garlic_nan",{ru:"Чесночный нан",en:"Garlic Nan",uz:"Sarimsoqli non"},28000,{veg:true,ingredients:{ru:["лепёшка","чесночное масло","зелень"],en:["flatbread","garlic butter","herbs"],uz:["non","sarimsoqli yogʻ","koʻkatlar"]}}),
+    khach_ap:I("khach_ap",{ru:"Хачапури по-аджарски",en:"Khachapuri (Adjarian)",uz:"Xachapuri-Ajar"},73000,{veg:true,ingredients:ING.khachapuri}),
+    khach_meg:I("khach_meg",{ru:"Хачапури по-мегрельски",en:"Khachapuri (Megrelian)",uz:"Xachapuri-Megrel"},73000,{veg:true,ingredients:ING.khachapuri}),
+    cheb_beef:I("cheb_beef",{ru:"Мини-чебурек с говядиной (4 шт)",en:"Mini Cheburek with Beef (4 pcs)",uz:"Mini cheburek (go‘shtli) (4 dona)"},40000,{veg:false,ingredients:ING.cheburekBeef}),
+    cheb_cheese:I("cheb_cheese",{ru:"Мини-чебурек с сыром (4 шт)",en:"Mini Cheburek with Cheese (4 pcs)",uz:"Mini cheburek (pishloqli) (4 dona)"},35000,{veg:true,ingredients:ING.cheburekCheese}),
+    somsa_trad:I("somsa_trad",{ru:"Самса традиционная (1 шт)",en:"Somsa Traditional (1 pc)",uz:"Tandir somsa (1 dona)"},20000,{veg:false,ingredients:ING.somsaMeat}),
+    somsa_olot:I("somsa_olot",{ru:"Самса Олот (1 шт)",en:"Somsa Olot (1 pc)",uz:"Olot somsa (1 dona)"},15000,{veg:false,ingredients:ING.somsaMeat}),
+    turkish_meze:I("turkish_meze",{ru:"Турецкий мезе сет",en:"Turkish Meze Set",uz:"Turkcha mezze seti"},95000,{veg:false,ingredients:ING.turkishMeze}),
 
-      // Salads
-      achik: I("achik", {ru:"Ачик-чучук",en:"Achik Chuchuk",uz:"Achik chuchuk"}, 29000, {veg:true,ingredients:["помидор","лук","перец","зелень"]}),
-      caesar: I("caesar", {ru:"Салат Цезарь с курицей",en:"Caesar Salad with Chicken",uz:"Salat Sezar tovuqli"}, 79000, {veg:false,ingredients:ING.caesar}),
-      greek: I("greek", {ru:"Греческий салат",en:"Greek Salad",uz:"Greck salad"}, 45000, {veg:true,ingredients:ING.greek}),
-      bakhor: I("bakhor", {ru:"Салат Бахор",en:"Salad Bakhor",uz:"Bahor salati"}, 63000, {veg:true,ingredients:["сезонные овощи","зелень","соус"]}),
-      olivier: I("olivier", {ru:"Оливье",en:"Olivier Salad",uz:"Salat Olivye"}, 69000, {veg:false,ingredients:["овощи","майонез","ветчина/курица"]}),
-      eggplant_tempura: I("eggplant_tempura", {ru:"Салат с баклажаном темпура",en:"Eggplant Tempura Salad",uz:"Qarsildoq baqlajon"}, 69000, {veg:true,ingredients:ING.eggplantTempura}),
-      choban: I("choban", {ru:"Чобан салад",en:"Choban Salad",uz:"Choban salat"}, 49000, {veg:true,ingredients:["помидор","огурец","перец","лук","зелень"]}),
-      assorted_fresh: I("assorted_fresh", {ru:"Овощное ассорти",en:"Assorted Fresh Vegetables",uz:"Sabzavot assortisi"}, 49000, {veg:true,ingredients:ING.assortedVeg}),
-      chirokchi: I("chirokchi", {ru:"Салат Чирокчи",en:"Chirokchi Salad",uz:"Salat Chiroqchi"}, 63000, {veg:false,ingredients:["овощи","сыр/мясо","соус"]}),
-      smak: I("smak", {ru:"Салат Смак",en:"Smak Salad",uz:"Smak salat"}, 67000, {veg:false,ingredients:["овощи","соус","мясо"]}),
-      muzh: I("muzh", {ru:"Мужской каприз",en:"Mujskoy Kapriz",uz:"Salat Mujskoy Kapriz"}, 75000, {veg:false,ingredients:["мясо","яйцо","сыр","майонез"]}),
-      tulum: I("tulum", {ru:"Салат Тулум",en:"Salad Tulum",uz:"Salat Tulum"}, 93000, {veg:false,ingredients:["сыр тулум","овощи","соус"]}),
-      thai_beef: I("thai_beef", {ru:"Тёплый тайский с говядиной",en:"Thai Warm Beef Salad",uz:"Mol go‘shtli TAI salati"}, 79000, {veg:false,ingredients:["говядина","тайский соус","овощи","зелень"]}),
+    achik:I("achik",{ru:"Ачик-чучук",en:"Achik Chuchuk",uz:"Achik chuchuk"},29000,{veg:true,ingredients:{ru:["помидор","лук","перец","зелень"],en:["tomato","onion","pepper","herbs"],uz:["pomidor","piyoz","qalampir","koʻkatlar"]}}),
+    caesar:I("caesar",{ru:"Салат Цезарь с курицей",en:"Caesar Salad with Chicken",uz:"Salat Sezar tovuqli"},79000,{veg:false,ingredients:ING.caesar}),
+    greek:I("greek",{ru:"Греческий салат",en:"Greek Salad",uz:"Greck salad"},45000,{veg:true,ingredients:ING.greek}),
+    bakhor:I("bakhor",{ru:"Салат Бахор",en:"Salad Bakhor",uz:"Bahor salati"},63000,{veg:true,ingredients:{ru:["сезонные овощи","зелень","соус"],en:["seasonal vegetables","herbs","dressing"],uz:["mavsumiy sabzavotlar","koʻkatlar","sous"]}}),
+    olivier:I("olivier",{ru:"Оливье",en:"Olivier Salad",uz:"Salat Olivye"},69000,{veg:false,ingredients:{ru:["овощи","майонез","ветчина/курица"],en:["vegetables","mayonnaise","ham/chicken"],uz:["sabzavotlar","mayonez","kolbasa/yoki tovuq"]}}),
+    eggplant_tempura:I("eggplant_tempura",{ru:"Салат с баклажаном темпура",en:"Eggplant Tempura Salad",uz:"Qarsildoq baqlajon"},69000,{veg:true,ingredients:ING.eggplantTempura}),
+    choban:I("choban",{ru:"Чобан салад",en:"Choban Salad",uz:"Choban salat"},49000,{veg:true,ingredients:{ru:["помидор","огурец","перец","лук","зелень"],en:["tomato","cucumber","pepper","onion","herbs"],uz:["pomidor","bodring","qalampir","piyoz","koʻkatlar"]}}),
+    assorted_fresh:I("assorted_fresh",{ru:"Овощное ассорти",en:"Assorted Fresh Vegetables",uz:"Sabzavot assortisi"},49000,{veg:true,ingredients:ING.assortedVeg}),
+    chirokchi:I("chirokchi",{ru:"Салат Чирокчи",en:"Chirokchi Salad",uz:"Salat Chiroqchi"},63000,{veg:false,ingredients:{ru:["овощи","сыр/мясо","соус"],en:["vegetables","cheese/meat","dressing"],uz:["sabzavotlar","pishloq/goʻsht","sous"]}}),
+    smak:I("smak",{ru:"Салат Смак",en:"Smak Salad",uz:"Smak salat"},67000,{veg:false,ingredients:{ru:["овощи","соус","мясо"],en:["vegetables","sauce","meat"],uz:["sabzavotlar","sous","goʻsht"]}}),
+    muzh:I("muzh",{ru:"Мужской каприз",en:"Mujskoy Kapriz",uz:"Salat Mujskoy Kapriz"},75000,{veg:false,ingredients:{ru:["мясо","яйцо","сыр","майонез"],en:["meat","egg","cheese","mayonnaise"],uz:["goʻsht","tuxum","pishloq","mayonez"]}}),
+    tulum:I("tulum",{ru:"Салат Тулум",en:"Salad Tulum",uz:"Salat Tulum"},93000,{veg:false,ingredients:{ru:["сыр тулум","овощи","соус"],en:["tulum cheese","vegetables","dressing"],uz:["tulum pishlogʻi","sabzavotlar","sous"]}}),
+    thai_beef:I("thai_beef",{ru:"Тёплый тайский с говядиной",en:"Thai Warm Beef Salad",uz:"Mol go‘shtli TAI salati"},79000,{veg:false,ingredients:{ru:["говядина","тайский соус","овощи","зелень"],en:["beef","thai dressing","vegetables","herbs"],uz:["mol goʻshti","tay sousi","sabzavotlar","koʻkatlar"]}}),
 
-      // Soups
-      kainatma: I("kainatma", {ru:"Кайнатма шурпа",en:"Kainatma Shurpa",uz:"Qaynatma sho‘rva"}, 63000, {veg:false,ingredients:["баранина","овощи","бульон"]}),
-      lagman_uyghur: I("lagman_uyghur", {ru:"Лагман уйгурский",en:"Lagman Uyghur",uz:"Uyg‘ur lag‘mon"}, 55000, {veg:false,ingredients:ING.lagman}),
-      mastava: I("mastava", {ru:"Мастава",en:"Mastava",uz:"Mastava"}, 49000, {veg:false,ingredients:["рис","овощи","мясо","бульон"]}),
-      chicken_noodle: I("chicken_noodle", {ru:"Куриный суп с лапшой",en:"Chicken Noodle Soup",uz:"Tovuqli sho‘rva"}, 61000, {veg:false,ingredients:["курица","лапша","овощи"]}),
-      chuchvara: I("chuchvara", {ru:"Чучвара",en:"Chuchvara",uz:"Chuchvara"}, 65000, {veg:false,ingredients:ING.chuchvara}),
-      moshxurda: I("moshxurda", {ru:"Мошхурда",en:"Moshxurda",uz:"Moshxo‘rda"}, 40000, {veg:false,ingredients:["маш","мясо","овощи"]}),
-      lentil: I("lentil", {ru:"Чечевичный суп",en:"Lentil Soup",uz:"Chechevichniy sho‘rva"}, 69000, {veg:true,ingredients:ING.lentilSoup}),
-      shurpa_jug: I("shurpa_jug", {ru:"Шурпа в кувшине",en:"Shurpa in a Jug",uz:"Ko‘za sho‘rva"}, 75000, {veg:false,ingredients:["мясо","овощи","бульон"]}),
-      manpar: I("manpar", {ru:"Манпар",en:"Manpar Soup",uz:"Manpar"}, 75000, {veg:false,ingredients:ING.manpar}),
+    kainatma:I("kainatma",{ru:"Кайнатма шурпа",en:"Kainatma Shurpa",uz:"Qaynatma sho‘rva"},63000,{veg:false,ingredients:{ru:["баранина","овощи","бульон"],en:["lamb","vegetables","broth"],uz:["qoʻzi goʻshti","sabzavotlar","shoʻrva"]}}),
+    lagman_uyghur:I("lagman_uyghur",{ru:"Лагман уйгурский",en:"Lagman Uyghur",uz:"Uyg‘ur lag‘mon"},55000,{veg:false,ingredients:ING.lagman}),
+    mastava:I("mastava",{ru:"Мастава",en:"Mastava",uz:"Mastava"},49000,{veg:false,ingredients:{ru:["рис","овощи","мясо","бульон"],en:["rice","vegetables","meat","broth"],uz:["guruch","sabzavotlar","goʻsht","shoʻrva"]}}),
+    chicken_noodle:I("chicken_noodle",{ru:"Куриный суп с лапшой",en:"Chicken Noodle Soup",uz:"Tovuqli sho‘rva"},61000,{veg:false,ingredients:{ru:["курица","лапша","овощи"],en:["chicken","noodles","vegetables"],uz:["tovuq","lapsha","sabzavotlar"]}}),
+    chuchvara:I("chuchvara",{ru:"Чучвара",en:"Chuchvara",uz:"Chuchvara"},65000,{veg:false,ingredients:ING.chuchvara}),
+    moshxurda:I("moshxurda",{ru:"Мошхурда",en:"Moshxurda",uz:"Moshxo‘rda"},40000,{veg:false,ingredients:{ru:["маш","мясо","овощи"],en:["mung beans","meat","vegetables"],uz:["mash","goʻsht","sabzavotlar"]}}),
+    lentil:I("lentil",{ru:"Чечевичный суп",en:"Lentil Soup",uz:"Chechevichniy sho‘rva"},69000,{veg:true,ingredients:ING.lentilSoup}),
+    shurpa_jug:I("shurpa_jug",{ru:"Шурпа в кувшине",en:"Shurpa in a Jug",uz:"Ko‘za sho‘rva"},75000,{veg:false,ingredients:{ru:["мясо","овощи","бульон"],en:["meat","vegetables","broth"],uz:["goʻsht","sabzavotlar","shoʻrva"]}}),
+    manpar:I("manpar",{ru:"Манпар",en:"Manpar Soup",uz:"Manpar"},75000,{veg:false,ingredients:ING.manpar}),
 
-      // Mains
-      festive_pilaf: I("festive_pilaf", {ru:"Праздничный плов",en:"Festive Pilaf",uz:"Osh"}, 50000, {veg:false,ingredients:ING.pilaf}),
-      say_beef: I("say_beef", {ru:"Сай говяжий",en:"Beef SAY",uz:"Go‘shtli Say"}, 89000, {veg:false,ingredients:ING.sayBeef}),
-      manti: I("manti", {ru:"Манты (1 шт)",en:"Manti (1 pc)",uz:"Manti (1 dona)"}, 19000, {veg:false,ingredients:ING.manti}),
-      waguri: I("waguri", {ru:"Вагури (300 г)",en:"Waguri (300 g)",uz:"Vaguri (300 g)"}, 249000, {veg:false,ingredients:ING.waguri}),
-      dolma: I("dolma", {ru:"Долма (Ток ош)",en:"Dolma (Tok Osh)",uz:"Do‘lma (Tok osh)"}, 85000, {veg:false,ingredients:ING.dolma}),
-      kazan_kebab: I("kazan_kebab", {ru:"Казан-кабоб",en:"Kazan Kebab",uz:"Qozon kabob"}, 159000, {veg:false,ingredients:ING.kazanKebab}),
-      assorted_boboy: I("assorted_boboy", {ru:"Ассорти Boboy",en:"Assorted Boboy Set",uz:"Assorti Boboy"}, 150000, {veg:false,ingredients:["сеты горячих блюд"]}),
-      sokoro: I("sokoro", {ru:"Сокоро",en:"Sokoro",uz:"Sokoro"}, 109000, {veg:false,ingredients:ING.sokoro}),
-      somboro: I("somboro", {ru:"Сомборо",en:"Somboro",uz:"Somboro"}, 109000, {veg:false,ingredients:ING.somboro}),
-      fried_lagman: I("fried_lagman", {ru:"Лагман жареный",en:"Fried Lagman",uz:"Qovurma lag‘mon"}, 73000, {veg:false,ingredients:ING.lagman}),
-      beshbarmak: I("beshbarmak", {ru:"Бешбармак",en:"Beshbarmak",uz:"Beshbarmoq"}, 139000, {veg:false,ingredients:ING.beshbarmak}),
-      nohot: I("nohot", {ru:"Нохот шурак",en:"Nohot Shurak",uz:"Noxot sho‘rak"}, 79000, {veg:false,ingredients:ING.nohot}),
-      tushenka: I("tushenka", {ru:"Тушёнка (говядина)",en:"Tushenka",uz:"Tushonka (mol go‘shti)"}, 115000, {veg:false,ingredients:ING.tushenka}),
-      khalim: I("khalim", {ru:"Халим",en:"Khalim",uz:"Xalim"}, 75000, {veg:false,ingredients:ING.khalim}),
-      norin: I("norin", {ru:"Норин",en:"Norin",uz:"Norin"}, 93000, {veg:false,ingredients:ING.norin}),
-      say_chicken: I("say_chicken", {ru:"Сай куриный",en:"SAY with Chicken",uz:"Tovuqli Say"}, 73000, {veg:false,ingredients:ING.sayChicken}),
-      say_beef_egg: I("say_beef_egg", {ru:"Сай с говядиной и яйцом",en:"SAY with Beef & Egg",uz:"Tuxum va go‘shtli Say"}, 89000, {veg:false,ingredients:ING.sayBeef}),
+    spicy_pilaf:I("spicy_pilaf",{ru:"Острый плов",en:"Spicy Pilaf (Osh)",uz:"Achchiq Osh"},50000,{veg:false,spicy:true,image:"/mnt/data/istockphoto-1351686668-612x612.jpg",ingredients:{ru:[...ING.pilaf.ru,"перец чили"],en:[...ING.pilaf.en,"chili"],uz:[...ING.pilaf.uz,"chili qalampiri"]}}),
+    festive_pilaf:I("festive_pilaf",{ru:"Праздничный плов",en:"Festive Pilaf",uz:"Osh"},50000,{veg:false,ingredients:ING.pilaf}),
+    say_beef:I("say_beef",{ru:"Сай говяжий",en:"Beef SAY",uz:"Go‘shtli Say"},89000,{veg:false,ingredients:ING.sayBeef}),
+    manti:I("manti",{ru:"Манты (1 шт)",en:"Manti (1 pc)",uz:"Manti (1 dona)"},19000,{veg:false,ingredients:ING.manti}),
+    waguri:I("waguri",{ru:"Вагури (300 г)",en:"Waguri (300 g)",uz:"Vaguri (300 g)"},249000,{veg:false,ingredients:ING.waguri}),
+    dolma:I("dolma",{ru:"Долма (Ток ош)",en:"Dolma (Tok Osh)",uz:"Do‘lma (Tok osh)"},85000,{veg:false,ingredients:ING.dolma}),
+    kazan_kebab:I("kazan_kebab",{ru:"Казан-кабоб",en:"Kazan Kebab",uz:"Qozon kabob"},159000,{veg:false,ingredients:ING.kazanKebab}),
+    assorted_boboy:I("assorted_boboy",{ru:"Ассорти Boboy",en:"Assorted Boboy Set",uz:"Assorti Boboy"},150000,{veg:false,ingredients:ING.assortedSet}),
+    sokoro:I("sokoro",{ru:"Сокоро",en:"Sokoro",uz:"Sokoro"},109000,{veg:false,ingredients:ING.sokoro}),
+    somboro:I("somboro",{ru:"Сомборо",en:"Somboro",uz:"Somboro"},109000,{veg:false,ingredients:ING.somboro}),
+    fried_lagman:I("fried_lagman",{ru:"Лагман жареный",en:"Fried Lagman",uz:"Qovurma lag‘mon"},73000,{veg:false,ingredients:ING.lagman}),
+    beshbarmak:I("beshbarmak",{ru:"Бешбармак",en:"Beshbarmak",uz:"Beshbarmoq"},139000,{veg:false,ingredients:ING.beshbarmak}),
+    nohot:I("nohot",{ru:"Нохот шурак",en:"Nohot Shurak",uz:"Noxot sho‘rak"},79000,{veg:false,ingredients:ING.nohot}),
+    tushenka:I("tushenka",{ru:"Тушёнка (говядина)",en:"Tushenka",uz:"Tushonka (mol go‘shti)"},115000,{veg:false,ingredients:ING.tushenka}),
+    khalim:I("khalim",{ru:"Халим",en:"Khalim",uz:"Xalim"},75000,{veg:false,ingredients:ING.khalim}),
+    norin:I("norin",{ru:"Норин",en:"Norin",uz:"Norin"},93000,{veg:false,ingredients:ING.norin}),
+    say_chicken:I("say_chicken",{ru:"Сай куриный",en:"SAY with Chicken",uz:"Tovuqli Say"},73000,{veg:false,ingredients:ING.sayChicken}),
+    say_beef_egg:I("say_beef_egg",{ru:"Сай с говядиной и яйцом",en:"SAY with Beef & Egg",uz:"Tuxum va go‘shtli Say"},89000,{veg:false,ingredients:ING.sayBeef}),
 
-      // Kebabs & Sides
-      minced_beef: I("minced_beef", {ru:"Кийма (фарш) шашлык",en:"Minced Beef Kebab",uz:"Qiyma kabob"}, 35000, {veg:false,ingredients:["фарш говяжий","лук","специи"]}),
-      beef_kebab: I("beef_kebab", {ru:"Мол жиз (шашлык)",en:"Beef Kebab",uz:"Mol jaz"}, 43000, {veg:false}),
-      lamb_kebab: I("lamb_kebab", {ru:"Кой жиз (шашлык)",en:"Lamb Kebab",uz:"Qo‘y jaz"}, 45000, {veg:false}),
-      lamb_chops: I("lamb_chops", {ru:"Каре ягнёнка",en:"Lamb chops",uz:"Qo‘zi qovurg‘asi"}, 75000, {veg:false}),
-      chicken_wings: I("chicken_wings", {ru:"Куриные крылья",en:"Chicken Wings",uz:"Tovuq qanoti"}, 42000, {veg:false}),
-      chicken_thighs: I("chicken_thighs", {ru:"Куриное бедро (жиз)",en:"Chicken Thighs",uz:"Tovuq jaz"}, 42000, {veg:false}),
-      liver: I("liver", {ru:"Печень",en:"Liver",uz:"Jigar"}, 35000, {veg:false,ingredients:ING.liver}),
-      veg_kebab: I("veg_kebab", {ru:"Овощной шашлык",en:"Vegetarian Kebab",uz:"Sabzavotli kabob"}, 35000, {veg:true,ingredients:ING.vegKebab}),
-      lamb_ribs: I("lamb_ribs", {ru:"Хрустящие бараньи рёбра",en:"Lamb Crispy Ribs",uz:"Qo‘y qovurg‘a jaz"}, 60000, {veg:false}),
-      rolls: I("rolls", {ru:"Рулет",en:"Rolls",uz:"Rulet"}, 43000, {veg:false}),
-      charvi: I("charvi", {ru:"Чарви кебаб",en:"Charvi Kebab",uz:"Charvi kabob"}, 39000, {veg:false}),
-      fries: I("fries", {ru:"Картофель фри",en:"French Fries",uz:"Kartoshka fri"}, 35000, {veg:true,ingredients:ING.fries}),
-      rice: I("rice", {ru:"Гарнир рис",en:"Rice",uz:"Guruch"}, 24000, {veg:true,ingredients:ING.rice}),
+    minced_beef:I("minced_beef",{ru:"Кийма (фарш) шашлык",en:"Minced Beef Kebab",uz:"Qiyma kabob"},35000,{veg:false,ingredients:{ru:["фарш говяжий","лук","специи"],en:["minced beef","onion","spices"],uz:["mol qiyma","piyoz","ziravorlar"]}}),
+    beef_kebab:I("beef_kebab",{ru:"Мол жиз (шашлык)",en:"Beef Kebab",uz:"Mol jaz"},43000,{veg:false}),
+    lamb_kebab:I("lamb_kebab",{ru:"Кой жиз (шашлык)",en:"Lamb Kebab",uz:"Qo‘y jaz"},45000,{veg:false}),
+    lamb_chops:I("lamb_chops",{ru:"Каре ягнёнка",en:"Lamb chops",uz:"Qo‘zi qovurg‘asi"},75000,{veg:false}),
+    chicken_wings:I("chicken_wings",{ru:"Куриные крылья",en:"Chicken Wings",uz:"Tovuq qanoti"},42000,{veg:false}),
+    chicken_thighs:I("chicken_thighs",{ru:"Куриное бедро (жиз)",en:"Chicken Thighs",uz:"Tovuq jaz"},42000,{veg:false}),
+    liver:I("liver",{ru:"Печень",en:"Liver",uz:"Jigar"},35000,{veg:false,ingredients:ING.liver}),
+    veg_kebab:I("veg_kebab",{ru:"Овощной шашлык",en:"Vegetarian Kebab",uz:"Sabzavotli kabob"},35000,{veg:true,ingredients:ING.vegKebab}),
+    lamb_ribs:I("lamb_ribs",{ru:"Хрустящие бараньи рёбра",en:"Lamb Crispy Ribs",uz:"Qo‘y qovurg‘a jaz"},60000,{veg:false}),
+    rolls:I("rolls",{ru:"Рулет",en:"Rolls",uz:"Rulet"},43000,{veg:false}),
+    charvi:I("charvi",{ru:"Чарви кебаб",en:"Charvi Kebab",uz:"Charvi kabob"},39000,{veg:false}),
+    fries:I("fries",{ru:"Картофель фри",en:"French Fries",uz:"Kartoshka fri"},35000,{veg:true,ingredients:ING.fries}),
+    rice:I("rice",{ru:"Гарнир рис",en:"Rice",uz:"Guruch"},24000,{veg:true,ingredients:ING.rice}),
 
-      // Desserts
-      napoleon: I("napoleon", {ru:"Наполеон",en:"Napoleon",uz:"Napoleon"}, 69000, {veg:true,ingredients:ING.napoleon}),
-      oreshky: I("oreshky", {ru:"Орешки (6 шт)",en:"Oreshky (6 pcs)",uz:"Oreshkalar (6 dona)"}, 50000, {veg:true}),
-      honey_cake: I("honey_cake", {ru:"Медовик",en:"Honey Cake",uz:"Medovik"}, 72000, {veg:true}),
-      meringue: I("meringue", {ru:"Меренга рулеты",en:"Meringue Rolls",uz:"Merenga"}, 69000, {veg:true}),
-      afghan: I("afghan", {ru:"Афганский десерт",en:"Afghan dessert",uz:"Afg‘on shirinlik"}, 69000, {veg:true}),
-      san_sebastian: I("san_sebastian", {ru:"Сан-Себастьян чизкейк",en:"San Sebastian Cheesecake",uz:"San Sebastyan chiskeyk"}, 79000, {veg:true,ingredients:ING.sanseb}),
-      tiramisu: I("tiramisu", {ru:"Тирамису",en:"Tiramisu",uz:"Tiramisu"}, 83000, {veg:true,ingredients:ING.tiramisu}),
-      kiev: I("kiev", {ru:"Киев",en:"Kiev",uz:"Kievskiy tort"}, 75000, {veg:true}),
-      snickers: I("snickers", {ru:"Сникерс роллы",en:"Snickers Rolls",uz:"Snikers tort"}, 79000, {veg:true}),
-      fondue: I("fondue", {ru:"Шоколадное фондю",en:"Chocolate Fondue",uz:"Shokoladli fondyu"}, 105000, {veg:true}),
-      profiteroles: I("profiteroles", {ru:"Профитроли",en:"Profiteroles",uz:"Profitroli"}, 69000, {veg:true}),
-      bakhlava: I("bakhlava", {ru:"Пахлава",en:"Bakhlava",uz:"Paxlava"}, 59000, {veg:true,ingredients:ING.bakhlava}),
-      matilda: I("matilda", {ru:"Матильда",en:"Matilda",uz:"Matilda"}, 75000, {veg:true}),
-      chak_chak: I("chak_chak", {ru:"Чак-чак чизкейк",en:"Chak Chak Cheesecake",uz:"Chak Chak chiskeyk"}, 75000, {veg:true}),
-      assorted_milliy: I("assorted_milliy", {ru:"Ассорти Миллий сет",en:"Assorted Milliy Set",uz:"Assorti Milliy"}, 87000, {veg:true}),
+    napoleon:I("napoleon",{ru:"Наполеон",en:"Napoleon",uz:"Napoleon"},69000,{veg:true,ingredients:ING.napoleon}),
+    oreshky:I("oreshky",{ru:"Орешки (6 шт)",en:"Oreshky (6 pcs)",uz:"Oreshkalar (6 dona)"},50000,{veg:true}),
+    honey_cake:I("honey_cake",{ru:"Медовик",en:"Honey Cake",uz:"Medovik"},72000,{veg:true}),
+    meringue:I("meringue",{ru:"Меренга рулеты",en:"Meringue Rolls",uz:"Merenga"},69000,{veg:true}),
+    afghan:I("afghan",{ru:"Афганский десерт",en:"Afghan dessert",uz:"Afg‘on shirinlik"},69000,{veg:true}),
+    san_sebastian:I("san_sebastian",{ru:"Сан-Себастьян чизкейк",en:"San Sebastian Cheesecake",uz:"San Sebastyan chiskeyk"},79000,{veg:true,ingredients:ING.sanseb}),
+    tiramisu:I("tiramisu",{ru:"Тирамису",en:"Tiramisu",uz:"Tiramisu"},83000,{veg:true,ingredients:ING.tiramisu}),
+    kiev:I("kiev",{ru:"Киев",en:"Kiev",uz:"Kievskiy tort"},75000,{veg:true}),
+    snickers:I("snickers",{ru:"Сникерс роллы",en:"Snickers Rolls",uz:"Snikers tort"},79000,{veg:true}),
+    fondue:I("fondue",{ru:"Шоколадное фондю",en:"Chocolate Fondue",uz:"Shokoladli fondyu"},105000,{veg:true}),
+    profiteroles:I("profiteroles",{ru:"Профитроли",en:"Profiteroles",uz:"Profitroli"},69000,{veg:true}),
+    bakhlava:I("bakhlava",{ru:"Пахлава",en:"Bakhlava",uz:"Paxlava"},59000,{veg:true,ingredients:ING.bakhlava}),
+    matilda:I("matilda",{ru:"Матильда",en:"Matilda",uz:"Matilda"},75000,{veg:true}),
+    chak_chak:I("chak_chak",{ru:"Чак-чак чизкейк",en:"Chak Chak Cheesecake",uz:"Chak Chak chiskeyk"},75000,{veg:true}),
+    assorted_milliy:I("assorted_milliy",{ru:"Ассорти Миллий сет",en:"Assorted Milliy Set",uz:"Assorti Milliy"},87000,{veg:true}),
 
-      // Drinks
-      iced_tea: I("iced_tea", {ru:"Айсти (ассорти)",en:"Iced Tea",uz:"Aysti"}, 31000, {veg:true}),
-      cappuccino: I("cappuccino", {ru:"Капучино",en:"Cappuccino",uz:"Cappuccino"}, 42000, {veg:true}),
-      americano: I("americano", {ru:"Американо",en:"Americano",uz:"Americano"}, 35000, {veg:true}),
-      latte: I("latte", {ru:"Латте",en:"Latte",uz:"Latte"}, 52000, {veg:true}),
-      mojito: I("mojito", {ru:"Мохито классический",en:"Classic Mojito",uz:"Klassik moxito"}, 65000, {veg:true}),
-      passion_mango_lemonade: I("passion_mango_lemonade", {ru:"Лимонад маракуйя-манго",en:"Passionfruit Mango Lemonade",uz:"Marakuya Mango limonad"}, 57000, {veg:true}),
-    };
-  })();
+    iced_tea:I("iced_tea",{ru:"Айсти (ассорти)",en:"Iced Tea",uz:"Aysti"},31000,{veg:true}),
+    cappuccino:I("cappuccino",{ru:"Капучино",en:"Cappuccino",uz:"Cappuccino"},42000,{veg:true}),
+    americano:I("americano",{ru:"Американо",en:"Americano",uz:"Americano"},35000,{veg:true}),
+    latte:I("latte",{ru:"Латте",en:"Latte",uz:"Latte"},52000,{veg:true}),
+    mojito:I("mojito",{ru:"Мохито классический",en:"Classic Mojito",uz:"Klassik moxito"},65000,{veg:true}),
+    passion_mango_lemonade:I("passion_mango_lemonade",{ru:"Лимонад маракуйя-манго",en:"Passionfruit Mango Lemonade",uz:"Marakuya Mango limonad"},57000,{veg:true})
+  }; })();
 
   const CATEGORIES = {
     starters:["suzma","marinated_veg","kulcha","garlic_nan","khach_ap","khach_meg","cheb_beef","cheb_cheese","somsa_trad","somsa_olot","turkish_meze"],
     salads:["achik","caesar","greek","bakhor","olivier","eggplant_tempura","choban","assorted_fresh","chirokchi","smak","muzh","tulum","thai_beef"],
     soups:["kainatma","lagman_uyghur","mastava","chicken_noodle","chuchvara","moshxurda","lentil","shurpa_jug","manpar"],
-    mains:["festive_pilaf","say_beef","manti","waguri","dolma","kazan_kebab","assorted_boboy","sokoro","somboro","fried_lagman","beshbarmak","nohot","tushenka","khalim","norin","say_chicken","say_beef_egg"],
+    mains:["spicy_pilaf","festive_pilaf","say_beef","manti","waguri","dolma","kazan_kebab","assorted_boboy","sokoro","somboro","fried_lagman","beshbarmak","nohot","tushenka","khalim","norin","say_chicken","say_beef_egg"],
     kebabs:["minced_beef","beef_kebab","lamb_kebab","lamb_chops","chicken_wings","chicken_thighs","liver","veg_kebab","lamb_ribs","rolls","charvi","fries","rice"],
     desserts:["napoleon","oreshky","honey_cake","meringue","afghan","san_sebastian","tiramisu","kiev","snickers","fondue","profiteroles","bakhlava","matilda","chak_chak","assorted_milliy"],
-    drinks:["iced_tea","americano","cappuccino","latte","mojito","passion_mango_lemonade"],
+    drinks:["iced_tea","americano","cappuccino","latte","mojito","passion_mango_lemonade"]
   };
 
   const CAT_NAMES = {
-    ru: { starters:"Закуски", salads:"Салаты", soups:"Супы", mains:"Горячие блюда", kebabs:"Шашлыки и гарниры", desserts:"Десерты", drinks:"Напитки (выбор)" },
-    en: { starters:"Starters", salads:"Salads", soups:"Soups", mains:"Main Courses", kebabs:"Kebabs & Sides", desserts:"Desserts", drinks:"Drinks (selection)" },
-    uz: { starters:"Yaxna taomlar", salads:"Salatlar", soups:"Sho‘rvalar", mains:"Asosiy taomlar", kebabs:"Kaboblar va qo‘shimchalar", desserts:"Shirinliklar", drinks:"Ichimliklar (tanlov)" },
+    ru:{ starters:"Закуски", salads:"Салаты", soups:"Супы", mains:"Горячие блюда", kebabs:"Шашлыки и гарниры", desserts:"Десерты", drinks:"Напитки (выбор)" },
+    en:{ starters:"Starters", salads:"Salads", soups:"Soups", mains:"Main Courses", kebabs:"Kebabs & Sides", desserts:"Desserts", drinks:"Drinks (selection)" },
+    uz:{ starters:"Yaxna taomlar", salads:"Salatlar", soups:"Sho‘rvalar", mains:"Asosiy taomlar", kebabs:"Kaboblar va qo‘shimchalar", desserts:"Shirinliklar", drinks:"Ichimliklar (tanlov)" }
   };
 
-  // ————— State —————
   let lang = localStorage.getItem('boboy_lang') || 'ru';
-  let vegOnly = false;
-  let query = '';
+  let vegOnly = JSON.parse(localStorage.getItem('boboy_veg') || 'false');
+  let query = localStorage.getItem('boboy_query') || '';
+  let activeSectionId = null; let lastFocusedEl = null;
 
-  // ————— DOM helpers —————
-  const $ = sel => document.querySelector(sel);
-  const $$ = sel => Array.from(document.querySelectorAll(sel));
-  const fmt = n => new Intl.NumberFormat('ru-RU').format(n) + ' UZS';
+  const $ = s=>document.querySelector(s); const $$=s=>Array.from(document.querySelectorAll(s));
+  const LOCALE = { ru:'ru-RU', en:'en-US', uz:'uz-UZ' };
+  const fmt = n => new Intl.NumberFormat(LOCALE[lang]||'ru-RU').format(n)+" UZS";
+  const locName = name => name[lang] || name.ru || Object.values(name)[0];
+  const locIng = ing => Array.isArray(ing) ? ing : (ing?.[lang] || ing?.ru || []);
 
-  function badge(text, colorClass){
-    const span = document.createElement('span');
-    span.className = `inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm border ${colorClass}`;
-    span.textContent = text;
-    return span;
-  }
+  function badge(text, cls){ const span=document.createElement('span'); span.className=`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm border ${cls}`; span.textContent=text; return span; }
 
-  // ————— Modal —————
   function showModal(item){
+    lastFocusedEl = document.activeElement;
     $('#modalTitle').textContent = locName(item.name);
     $('#modalPrice').textContent = fmt(item.price);
-    const badges = $('#modalBadges'); badges.innerHTML='';
-    badges.appendChild(badge(item.veg ? STR[lang].vegetarian : STR[lang].notVegetarian, item.veg ? 'text-emerald-300 bg-emerald-500/10 border-emerald-400/20' : 'text-white/70 bg-white/5 border-white/10'));
-    const list = $('#ingredientsList'); list.innerHTML='';
-    const soon = $('#ingredientsSoon');
-    if(item.ingredients && item.ingredients.length){
-      soon.classList.add('hidden');
-      item.ingredients.forEach(g=>{ const li=document.createElement('li'); li.textContent=g; list.appendChild(li); });
-    } else { list.innerHTML=''; soon.classList.remove('hidden'); }
+    const b=$('#modalBadges'); b.innerHTML='';
+    b.appendChild(badge(item.veg?STR[lang].vegetarian:STR[lang].notVegetarian, item.veg?'text-emerald-300 bg-emerald-500/10 border-emerald-400/20':'text-white/70 bg-white/5 border-white/10'));
+    if(item.spicy) b.appendChild(badge(STR[lang].spicy,'text-red-300 bg-red-500/10 border-red-400/20'));
+    const list=$('#ingredientsList'); list.innerHTML='';
+    const ings=locIng(item.ingredients); const soon=$('#ingredientsSoon');
+    if(ings && ings.length){ soon.classList.add('hidden'); ings.forEach(g=>{const li=document.createElement('li'); li.textContent=g; list.appendChild(li);}); }
+    else { soon.classList.remove('hidden'); }
     $('#modalAllergy').textContent = STR[lang].allergyNote;
-    $('#item-modal').classList.remove('hidden');
-    $('#item-modal').classList.add('flex');
+    const m=$('#item-modal'); m.classList.remove('hidden'); m.classList.add('flex'); m.setAttribute('aria-hidden','false');
+    const closeBtn=$('#modalClose'); closeBtn.focus();
+    function onKey(e){
+      if(e.key==='Escape') hideModal();
+      if(e.key==='Tab'){
+        const f=$$('#item-modal button, #item-modal [href], #item-modal input, #item-modal select, #item-modal textarea'); if(!f.length) return; const first=f[0], last=f[f.length-1];
+        if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+        else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+      }
+    }
+    m.dataset.trap='1'; document.addEventListener('keydown', onKey); m._releaseTrap=()=>document.removeEventListener('keydown', onKey);
   }
-  function hideModal(){
-    const m=$('#item-modal'); m.classList.add('hidden'); m.classList.remove('flex');
-  }
+  function hideModal(){ const m=$('#item-modal'); if(m._releaseTrap) m._releaseTrap(); m.classList.add('hidden'); m.classList.remove('flex'); m.setAttribute('aria-hidden','true'); if(lastFocusedEl) lastFocusedEl.focus(); }
   window.hideModal = hideModal;
 
-  // ————— Rendering —————
-  function locName(name){ return name[lang] || name.ru || Object.values(name)[0]; }
-
   function renderTopCopy(){
+    document.documentElement.lang = lang;
     $('#subtitle').textContent = STR[lang].topbarSubtitle;
     $('#change-language-label').textContent = STR[lang].changeLanguage;
     $('#dishOfDayLabel').textContent = STR[lang].dishOfDay;
@@ -433,157 +410,39 @@
     $('#ingredientsSoon').textContent = STR[lang].ingredientsSoon;
     $('#search').placeholder = STR[lang].searchPlaceholder;
     $('#vegOnlyLabel').textContent = STR[lang].vegOnly;
+    $('#emptyTitle').textContent = STR[lang].emptyTitle;
+    $('#emptyBody').textContent = STR[lang].emptyBody;
+    $('#resetFilters').textContent = STR[lang].reset;
   }
 
-  function dishOfDayItem(){
-    const featured=["festive_pilaf","lagman_uyghur","kazan_kebab","norin","san_sebastian","passion_mango_lemonade"];
-    const idx = new Date().getDate() % featured.length;
-    const key = featured[idx];
-    return ITEMS[key];
-  }
+  function dishOfDayItem(){ return ITEMS.spicy_pilaf; }
+  function renderHero(){ const d=dishOfDayItem(); $('#dishOfDayName').textContent=locName(d.name); $('#dishOfDayName2').textContent=locName(d.name); const box=$('#dishOfDayBadges'); box.innerHTML=''; if(d.veg) box.appendChild(badge(STR[lang].vegetarian,'text-emerald-300 bg-emerald-500/10 border-emerald-400/20')); if(d.spicy) box.appendChild(badge(STR[lang].spicy,'text-red-300 bg-red-500/10 border-red-400/20')); box.appendChild(badge(fmt(d.price),'text-amber-200 bg-amber-500/10 border-amber-400/20')); const img=$('#dishOfDayImg'); if(d.image){ img.src=d.image; img.alt=locName(d.name); img.classList.remove('hidden'); } else img.classList.add('hidden'); }
 
-  function renderHero(){
-    const d = dishOfDayItem();
-    $('#dishOfDayName').textContent = locName(d.name);
-    $('#dishOfDayName2').textContent = locName(d.name);
-    const box = $('#dishOfDayBadges'); box.innerHTML='';
-    if(d.veg) box.appendChild(badge(STR[lang].vegetarian, 'text-emerald-300 bg-emerald-500/10 border-emerald-400/20'));
-    box.appendChild(badge(fmt(d.price), 'text-amber-200 bg-amber-500/10 border-amber-400/20'));
-  }
+  function matchesQuery(item){ const text=(locName(item.name)+' '+locIng(item.ingredients).join(' ')).toLowerCase(); const okQuery=!query || text.includes(query.toLowerCase()); const okVeg=!vegOnly || item.veg; return okQuery && okVeg; }
 
-  function matchesQuery(item){
-    const text = (locName(item.name) + ' ' + (item.ingredients||[]).join(' ')).toLowerCase();
-    const okQuery = !query || text.includes(query.toLowerCase());
-    const okVeg = !vegOnly || item.veg;
-    return okQuery && okVeg;
-  }
+  function buildCard(item, categoryLabel){ const btn=document.createElement('button'); btn.className='group text-left rounded-2xl p-[1px]'; btn.style.background='linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.12), rgba(255,255,255,0))'; btn.innerHTML=`<div class="h-full rounded-2xl p-4 glass hover:border-white/20 transition flex flex-col"><div class="flex items-start justify-between gap-3"><div><div class="font-medium text-base leading-snug group-hover:text-white">${locName(item.name)}</div>${categoryLabel?`<div class=\"text-xs text-white/50 mt-0.5\">${categoryLabel}</div>`:''}</div><div class="text-amber-200/90 text-sm whitespace-nowrap">${fmt(item.price)}</div></div><div class="mt-3 flex items-center gap-2 text-white/60 text-xs flex-wrap">${item.veg?`<span class=\"inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-400/20\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M12 2S7 8 7 12a5 5 0 0010 0c0-4-5-10-5-10z\"></path></svg> ${STR[lang].vegetarian}</span>`:''}${item.spicy?`<span class=\"inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-400/20\">🌶 ${STR[lang].spicy}</span>`:''}</div></div>`; btn.onclick=()=>showModal(item); return btn; }
 
-  function buildCard(item, categoryLabel){
-    const btn = document.createElement('button');
-    btn.className = 'group text-left rounded-2xl p-[1px]';
-    btn.style.background = 'linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.12), rgba(255,255,255,0))';
-    btn.innerHTML = `
-      <div class="h-full rounded-2xl p-4 glass hover:border-white/20 transition flex flex-col">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <div class="font-medium text-base leading-snug group-hover:text-white">${locName(item.name)}</div>
-            ${categoryLabel ? `<div class="text-xs text-white/50 mt-0.5">${categoryLabel}</div>` : ''}
-          </div>
-          <div class="text-amber-200/90 text-sm whitespace-nowrap">${fmt(item.price)}</div>
-        </div>
-        <div class="mt-3 flex items-center gap-2 text-white/60 text-xs">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3h16M4 3c1 7 4 10 8 12 4-2 7-5 8-12M7 21h10"></path></svg>
-          ${item.veg ? `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-400/20"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2S7 8 7 12a5 5 0 0010 0c0-4-5-10-5-10z"></path></svg> veg</span>`:''}
-        </div>
-      </div>`;
-    btn.onclick = () => showModal(item);
-    return btn;
-  }
+  function renderMenu(){ const root=$('#menu-root'); root.innerHTML=''; const order=['starters','salads','soups','mains','kebabs','desserts','drinks']; let total=0; order.forEach(cat=>{ const sec=document.createElement('section'); sec.id=cat; sec.className='scroll-mt-28'; const h2=document.createElement('h2'); h2.className='text-2xl md:text-3xl font-semibold mb-6 tracking-wide'; h2.textContent = CAT_NAMES[lang][cat]; sec.appendChild(h2); const grid=document.createElement('div'); grid.className='grid sm:grid-cols-2 lg:grid-cols-3 gap-4'; CATEGORIES[cat].forEach(k=>{ const it=ITEMS[k]; if(matchesQuery(it)){ grid.appendChild(buildCard(it, CAT_NAMES[lang][cat])); total++; } }); sec.appendChild(grid); if(grid.children.length) root.appendChild(sec); }); const empty=$('#empty-state'); empty.classList.toggle('hidden', total>0); root.classList.toggle('hidden', total===0); }
 
-  function renderMenu(){
-    const root = $('#menu-root');
-    root.innerHTML = '';
-    const order = ['starters','salads','soups','mains','kebabs','desserts','drinks'];
-    order.forEach(catId => {
-      const sec = document.createElement('section'); sec.id = catId;
-      const h2 = document.createElement('h2'); h2.className = 'text-2xl md:text-3xl font-semibold mb-6 tracking-wide'; h2.textContent = CAT_NAMES[lang][catId];
-      sec.appendChild(h2);
-      const grid = document.createElement('div'); grid.className='grid sm:grid-cols-2 lg:grid-cols-3 gap-4';
-      CATEGORIES[catId].forEach(k=>{
-        const it = ITEMS[k];
-        if(matchesQuery(it)) grid.appendChild(buildCard(it, CAT_NAMES[lang][catId]));
-      });
-      sec.appendChild(grid);
-      if(grid.children.length) root.appendChild(sec);
-    });
-  }
+  function renderChips(){ const wrap=$('#cat-nav'); wrap.innerHTML=''; ['starters','salads','soups','mains','kebabs','desserts','drinks'].forEach(id=>{ const a=document.createElement('a'); a.href='#'+id; a.dataset.target=id; a.className='glass chip shrink-0 rounded-full px-3 py-1.5 border border-white/10 hover:bg-white/10 text-sm'; a.textContent=STR[lang].chips?.[id]||CAT_NAMES[lang][id]; a.addEventListener('click',e=>{ e.preventDefault(); const t=document.getElementById(id); if(t){ t.classList.remove('section-focus'); t.scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(()=>t.classList.add('section-focus'),40); setTimeout(()=>t.classList.remove('section-focus'),800); } }); wrap.appendChild(a); }); }
 
-  // ————— Language Gate logic —————
-  function bindLangButtons(){
-    $$('#lang-gate [data-lang]').forEach(btn=>{
-      btn.onclick = ()=>{
-        lang = btn.getAttribute('data-lang');
-        localStorage.setItem('boboy_lang', lang);
-        sessionStorage.setItem('lang_gate_shown','1');
-        $('#lang-gate').classList.add('hidden');
-        $('#lang-gate').classList.remove('flex');
-        init();
-      };
-    });
-  }
+  function setupScrollSpy(){ const obs=new IntersectionObserver((es)=>{ es.forEach(en=>{ if(en.isIntersecting){ activeSectionId=en.target.id; highlightChip(activeSectionId); } }); },{rootMargin:'-40% 0px -50% 0px',threshold:[0,1]}); $$('#menu-root > section').forEach(sec=>obs.observe(sec)); }
+  function highlightChip(id){ $$('#cat-nav a').forEach(a=>{ const on=a.dataset.target===id; a.classList.toggle('chip-active', on); }); }
 
-  function openLangGateIfNeeded(){
-    const hasStored = !!localStorage.getItem('boboy_lang');
-    const shownThisSession = !!sessionStorage.getItem('lang_gate_shown');
-    const urlForces = new URLSearchParams(location.search).get('lang') === 'select';
-    const shouldShow = urlForces || !shownThisSession || !hasStored;
-    const gate = $('#lang-gate');
-    gate.classList.toggle('hidden', !shouldShow);
-    gate.classList.toggle('flex', shouldShow);
-  }
+  function bindLangButtons(){ $$('#lang-gate [data-lang]').forEach(btn=>{ btn.onclick=()=>{ lang=btn.dataset.lang; localStorage.setItem('boboy_lang',lang); sessionStorage.setItem('lang_gate_shown','1'); $('#lang-gate').classList.add('hidden'); $('#lang-gate').classList.remove('flex'); init(); }; }); }
+  function openLangGateIfNeeded(){ const url=new URL(location.href); const lp=url.searchParams.get('lang'); if(['ru','en','uz'].includes(lp)){ lang=lp; localStorage.setItem('boboy_lang',lang); } const hasStored=!!localStorage.getItem('boboy_lang'); const shown=!!sessionStorage.getItem('lang_gate_shown'); const force=lp==='select'; const show=force||!shown||!hasStored; const g=$('#lang-gate'); g.classList.toggle('hidden',!show); g.classList.toggle('flex',show); g.setAttribute('aria-hidden', show?'false':'true'); }
 
-  // ————— Events —————
-  $('#change-language').addEventListener('click', ()=>{
-    $('#lang-gate').classList.remove('hidden');
-    $('#lang-gate').classList.add('flex');
-  });
-  $('#reset-lang').addEventListener('click', ()=>{
-    localStorage.removeItem('boboy_lang');
-    sessionStorage.removeItem('lang_gate_shown');
-    openLangGateIfNeeded();
-  });
+  $('#change-language').addEventListener('click',()=>{ $('#lang-gate').classList.remove('hidden'); $('#lang-gate').classList.add('flex'); $('#lang-gate').setAttribute('aria-hidden','false'); });
+  $('#reset-lang').addEventListener('click',()=>{ localStorage.removeItem('boboy_lang'); sessionStorage.removeItem('lang_gate_shown'); openLangGateIfNeeded(); });
+  $('#search').addEventListener('input',e=>{ query=e.target.value; localStorage.setItem('boboy_query',query); renderMenu(); });
+  $('#vegOnlyBtn').addEventListener('click',()=>{ vegOnly=!vegOnly; localStorage.setItem('boboy_veg',JSON.stringify(vegOnly)); $('#vegOnlyBtn').classList.toggle('bg-emerald-500/15',vegOnly); $('#vegOnlyBtn').classList.toggle('border-emerald-400/30',vegOnly); $('#vegOnlyBtn').setAttribute('aria-pressed',String(vegOnly)); renderMenu(); });
+  $('#item-modal').addEventListener('click',e=>{ if(e.target.matches('[data-backdrop]')) hideModal(); });
+  $('#modalClose').addEventListener('click', hideModal);
+  document.addEventListener('keydown',e=>{ if(e.key==='/' && document.activeElement.tagName!=='INPUT'){ e.preventDefault(); $('#search').focus(); } if(e.key.toLowerCase()==='v' && document.activeElement.tagName!=='INPUT'){ e.preventDefault(); $('#vegOnlyBtn').click(); } if(e.key.toLowerCase()==='l' && document.activeElement.tagName!=='INPUT'){ e.preventDefault(); $('#change-language').click(); } if(e.key==='Escape' && !$('#item-modal').classList.contains('hidden')) hideModal(); });
+  $('#resetFilters').addEventListener('click',()=>{ query=''; vegOnly=false; localStorage.setItem('boboy_query',''); localStorage.setItem('boboy_veg','false'); $('#search').value=''; $('#vegOnlyBtn').classList.remove('bg-emerald-500/15','border-emerald-400/30'); $('#vegOnlyBtn').setAttribute('aria-pressed','false'); renderMenu(); window.scrollTo({top:0,behavior:'smooth'}); });
 
-  $('#search').addEventListener('input', (e)=>{ query = e.target.value; renderMenu(); });
-  $('#vegOnlyBtn').addEventListener('click', ()=>{ vegOnly = !vegOnly; $('#vegOnlyBtn').classList.toggle('bg-emerald-500/15', vegOnly); $('#vegOnlyBtn').classList.toggle('border-emerald-400/30', vegOnly); renderMenu(); });
-
-  // ————— Init —————
-  function init(){
-    document.documentElement.style.scrollBehavior = 'smooth';
-    renderTopCopy();
-    renderHero();
-    renderMenu();
-  }
-
-  // Self-tests (console-only)
-  (function tests(){
-    const t = [];
-    t.push(['dishOfDayDesc strings closed', typeof STR.ru.dishOfDayDesc==='string' && !/\n/.test(STR.ru.dishOfDayDesc)]);
-    ['ru','en','uz'].forEach(L=>{
-      t.push([`CAT_NAMES ${L} has all`, ['starters','salads','soups','mains','kebabs','desserts','drinks'].every(k=>CAT_NAMES[L][k])]);
-    });
-    const featured=["festive_pilaf","lagman_uyghur","kazan_kebab","norin","san_sebastian","passion_mango_lemonade"];
-    t.push(['featured exists', featured.every(id=>ITEMS[id])]);
-    t.push(['has vegetarian', Object.values(ITEMS).some(it=>it.veg===true)]);
-
-    // New tests for language gate & i18n
-    bindLangButtons();
-    const before = sessionStorage.getItem('lang_gate_shown');
-    sessionStorage.removeItem('lang_gate_shown');
-    localStorage.removeItem('boboy_lang');
-    openLangGateIfNeeded();
-    const gateVisible = !document.getElementById('lang-gate').classList.contains('hidden');
-    t.push(['lang gate shows on first load', gateVisible]);
-    // restore
-    if(before) sessionStorage.setItem('lang_gate_shown', before);
-
-    // Search and veg filters
-    const countAll = Object.values(ITEMS).length;
-    query = 'плов';
-    const matchedPlov = Object.values(ITEMS).filter(matchesQuery).length; t.push(['search filters some items ("плов")', matchedPlov < countAll]);
-    query = ''; vegOnly = true; const vegCount = Object.values(ITEMS).filter(matchesQuery).length; t.push(['vegOnly reduces non-veg items', vegCount < countAll]);
-    vegOnly = false;
-
-    // Language switch updates placeholder
-    lang = 'en'; renderTopCopy(); t.push(['lang switch updates search placeholder', document.getElementById('search').placeholder === STR.en.searchPlaceholder]);
-    lang = localStorage.getItem('boboy_lang') || 'ru'; renderTopCopy();
-
-    const passed = t.filter(([,ok])=>ok).length; console.log(`BOBOY self-tests: ${passed}/${t.length} passed.`); t.forEach(([n,ok])=>console.assert(ok, 'Test failed:', n));
-  })();
-
-  // bind + open gate, then render
-  bindLangButtons();
-  openLangGateIfNeeded();
-  init();
+  function init(){ renderTopCopy(); renderHero(); renderChips(); $('#search').value=query||''; $('#vegOnlyBtn').classList.toggle('bg-emerald-500/15',vegOnly); $('#vegOnlyBtn').classList.toggle('border-emerald-400/30',vegOnly); $('#vegOnlyBtn').setAttribute('aria-pressed',String(vegOnly)); renderMenu(); setupScrollSpy(); highlightChip('starters'); }
+  bindLangButtons(); openLangGateIfNeeded(); init();
   </script>
 </body>
 </html>
